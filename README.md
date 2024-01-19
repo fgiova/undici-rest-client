@@ -3,8 +3,8 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/undici-rest-client.svg?style=flat)](https://www.npmjs.com/package/@fgiova/undici-rest-client)
 ![CI workflow](https://github.com/fgiova/undici-rest-client/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![Maintainability](https://api.codeclimate.com/v1/badges/__/maintainability)](https://codeclimate.com/github/fgiova/undici-rest-client/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/__/test_coverage)](https://codeclimate.com/github/fgiova/undici-rest-client/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/maintainability)](https://codeclimate.com/github/fgiova/undici-rest-client/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/test_coverage)](https://codeclimate.com/github/fgiova/undici-rest-client/test_coverage)
 
 ## Description
 This is a simple REST client using [undici](https://www.npmjs.com/package/undici) as http client.<br>
@@ -53,3 +53,75 @@ const response = await client.post("/foo/bar", {
     }
 });
 ```
+
+## Client Options
+| Option  | Type                  | Default | Description                                   |
+|---------|-----------------------|---------|-----------------------------------------------|
+| baseUrl | string                |         | The base domain url to be used for the client |
+| retry   | Retry Options         |         | The retry options                             |
+| cache   | LRUCache<string, any> |         | The LRU cache instance                        |
+| undici  | Undici Option         |         | The undici options                            |
+
+## Retry Options
+| Option          | Type                                | Default                      | Description                                   |
+|-----------------|-------------------------------------|------------------------------|-----------------------------------------------|
+| httpCodes       | number[]                            | 502, 503, 429, 408, 504, 599 | The HTTP codes to be retried                  |
+| baseTimeout     | number                              | 300                          | The base timeout in ms                        |
+| maxTimeout      | number                              | 30000                        | The max timeout in ms                         |
+| maxRetry        | number                              | 3                            | The max number of retry                       |
+| backoff         | (retryCount: number) => number      | exponential backoff          | The backoff function                          |
+
+## Undici Options
+| Option          | Type             | Default | Description                                   |
+|-----------------|------------------|---------|-----------------------------------------------|
+| clientOption    | Pool.Options     |         | The number of connections                     |
+| pipelining      | number           |         | The number of pipelining                      |
+
+## RequestOptions
+| Option          | Type                                | Default | Description                                   |
+|-----------------|-------------------------------------|---------|-----------------------------------------------|
+| headers         | Record<string, string>              |         | The HTTP headers                              |
+| body            | any                                 |         | The HTTP body                                 |
+| ttl             | number                              |         | The TTL for the cache                         |
+| requestKey      | string                              |         | The key for the cache                         |
+| path            | string                              |         | The path for the request                      |
+
+
+**Notes**:<br>
+The cache is a simple LRU cache with a max size of 1000 items and a default TTL of 30 seconds.<br>
+The cache TTL can be overridden using the `ttl` option in the request.<br>
+The cache key is generated using the request method, the request path and the request body.<br>
+The cache key can be overridden using the `requestKey` option in the request.<br>
+When the request is not idempotent, the cache is disabled.<br>
+When the body is a plain object the header content-type "application/json" is added to request.<br>
+When response is a not compressible (typically a binary response) array buffer are returned.<br>
+Parallel idempotent requests at same resource are deduplicated.<br>
+
+## Methods
+### request
+```typescript
+request<T = any>(options: RequestOptions): Promise<Response<T>>;
+```
+### get
+```typescript
+get<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" >): Promise<Response<T>>;
+```
+### post
+```typescript
+post<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+```
+### put
+```typescript
+put<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+```
+### patch
+```typescript
+patch<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+```
+### delete
+```typescript
+delete<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl">): Promise<Response<T>>;
+```
+
+## License
+Licensed under [MIT](./LICENSE).
