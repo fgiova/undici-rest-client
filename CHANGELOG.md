@@ -1,3 +1,10 @@
+# [2.0.0](https://github.com/fgiova/undici-rest-client/compare/1.0.1...2.0.0) (2024-02-05)
+
+
+### Bug Fixes
+
+* update some dependencies ([db376f4](https://github.com/fgiova/undici-rest-client/commit/db376f4f1f36e429a156a42d74c0ff7b0faa1ae2))
+
 ## [1.0.1](https://github.com/fgiova/undici-rest-client/compare/1.0.0...1.0.1) (2024-01-19)
 
 
