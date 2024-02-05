@@ -11,6 +11,9 @@ This is a simple REST client using [undici](https://www.npmjs.com/package/undici
 It's support a simple retry mechanism using exponential backoff or using delay based on retry-after HTTP header 
 It's implement a simple LRU cache mechanism on idempotent HTTP methods.
 
+[!NOTE]
+For node 16 use version 1.x, version 2.x support only Node.js >= 18.
+
 ## Installation
 
 ```bash
