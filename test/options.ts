@@ -1,8 +1,9 @@
 import {test} from "tap";
-import {Client, Dispatcher, MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src";
-import {TestClient} from "./test-types";
+import {Agent, Client, Dispatcher, MockAgent, setGlobalDispatcher} from "undici";
+import RestClient from "../src/index.js";
+import {TestClient} from "./test-types.js";
 import {LRUCache} from "lru-cache";
+import fastify from "fastify";
 
 
 
@@ -24,17 +25,18 @@ test("Test Client options", {only: true}, async t => {
 		await t.context.restClient.close();
 	});
 
-	await t.test("Client Option undici Option", async (t: TestClient) => {
+	await t.test("Client Option undici Option", {only: true}, async (t: TestClient) => {
+		setGlobalDispatcher(new Agent());
 		const mockAgent = new MockAgent();
 		const mockPool = mockAgent.get("https://client.api.com");
 		mockPool.intercept({
-			path: `/testDifferentPool`,
+			path: "/testDifferentPool",
 			method: "GET"
 		})
-		.defaultReplyHeaders({
-			"content-type": "application/json"
-		})
-		.reply(200,{test: true});
+			.defaultReplyHeaders({
+				"content-type": "application/json"
+			})
+			.reply(200,{test: true});
 		const restClient = new RestClient({
 			baseUrl: "https://client.api.com",
 			undici: {
@@ -49,13 +51,13 @@ test("Test Client options", {only: true}, async t => {
 		const returndata = await restClient.get("/testDifferentPool",{
 			requestKey: "test",
 			ttl: 5_000,
-		})
+		});
 		t.same(returndata, {test: true});
 	});
 
 	await t.test("Client Option Custom cache", async (t: TestClient) => {
 		t.context.mockPool.intercept({
-			path: `/testCustomCache`,
+			path: "/testCustomCache",
 			method: "GET"
 		})
 			.defaultReplyHeaders({
@@ -70,18 +72,34 @@ test("Test Client options", {only: true}, async t => {
 		const returndata = await restClient.get("/testCustomCache",{
 			requestKey: "test",
 			ttl: 5_000,
-		})
+		});
 		t.same(returndata, {test: true});
 	});
 
 	await t.test("Custom Client", async t => {
-		const client = new Client("https://www.google.com");
+		setGlobalDispatcher(new Agent());
+
+		const app = fastify();
+		t.teardown(async () => await app.close());
+		app.get("/", async (req, reply) => {
+			reply
+				.headers({
+					"content-type": "application/json",
+				})
+				.send({ test: true });
+		});
+		await app.ready();
+
+		const baseUrl = await app.listen();
+
+		const client = new Client(baseUrl);
+
 		const cache = new LRUCache<string,any>({
 			max: 100,
 			ttl: 5_000
 		});
 		const restClient = new RestClient({
-			baseUrl: "https://www.google.com",
+			baseUrl: baseUrl,
 			cache,
 			undici: {
 				client
@@ -99,7 +117,7 @@ test("Test Client options", {only: true}, async t => {
 		const now = Date.now();
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -129,16 +147,16 @@ test("Test Client options", {only: true}, async t => {
 
 	await t.test("Test simple Request", async (t: TestClient) => {
 		t.context.mockPool.intercept({
-			path: `/plainText`,
+			path: "/plainText",
 			headers: {
 				"content-type": "text/plain"
 			},
 			method: "GET"
 		})
-		.defaultReplyHeaders({
-			"content-type": "text/plain"
-		})
-		.reply(200,"OK");
+			.defaultReplyHeaders({
+				"content-type": "text/plain"
+			})
+			.reply(200,"OK");
 
 		const returndata = await t.context.restClient.get("/plainText",{
 			requestKey: "test",
@@ -153,13 +171,13 @@ test("Test Client options", {only: true}, async t => {
 	await t.test("Test Array Buffer Response", async (t: TestClient) => {
 		const data = Buffer.from(Buffer.alloc(1));
 		t.context.mockPool.intercept({
-			path: `/blob`,
+			path: "/blob",
 			method: "GET"
 		})
-		.defaultReplyHeaders({
-			"content-type": "application/octet-stream"
-		})
-		.reply(200,data);
+			.defaultReplyHeaders({
+				"content-type": "application/octet-stream"
+			})
+			.reply(200,data);
 
 		const returndata = await t.context.restClient.get("/blob");
 		t.same(Buffer.from(returndata as ArrayBuffer), data);

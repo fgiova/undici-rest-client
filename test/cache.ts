@@ -1,7 +1,7 @@
 import {test} from "tap";
-import {TestClient} from "./test-types";
+import {TestClient} from "./test-types.js";
 import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src";
+import RestClient from "../src/index.js";
 
 test("Test Cache", {only: true}, async t => {
 
@@ -24,7 +24,7 @@ test("Test Cache", {only: true}, async t => {
 	await t.test("Test custom cache time", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -42,7 +42,7 @@ test("Test Cache", {only: true}, async t => {
 	await t.test("Test hit call stack", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -67,7 +67,7 @@ test("Test Cache", {only: true}, async t => {
 	await t.test("Test hit call stack on method DELETE", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "DELETE"
 			})
 			.defaultReplyHeaders({
@@ -90,7 +90,7 @@ test("Test Cache", {only: true}, async t => {
 	await t.test("Test hit result from cache", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -113,7 +113,7 @@ test("Test Cache", {only: true}, async t => {
 	await t.test("Test force skip from cache", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({

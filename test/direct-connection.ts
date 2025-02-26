@@ -1,6 +1,6 @@
 import {test} from "tap";
 import {LRUCache} from "lru-cache";
-import RestClient from "../src";
+import RestClient from "../src/index.js";
 
 test("RestClient with connection to internet", async (t) => {
 	await t.test("GET google.com", async t => {

@@ -1,8 +1,8 @@
 import {test} from "tap";
 import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src";
+import RestClient from "../src/index.js";
 import fastify from "fastify";
-import {TestClient} from "./test-types";
+import {TestClient} from "./test-types.js";
 
 test("Test retry", {only: true}, async t => {
 
@@ -27,7 +27,7 @@ test("Test retry", {only: true}, async t => {
 		const now = Date.now();
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -55,7 +55,7 @@ test("Test retry", {only: true}, async t => {
 		const now = Date.now();
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -84,7 +84,7 @@ test("Test retry", {only: true}, async t => {
 		const now = Date.now();
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -114,7 +114,7 @@ test("Test retry", {only: true}, async t => {
 		let retry = 0;
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -139,7 +139,7 @@ test("Test retry", {only: true}, async t => {
 	await t.test("Test retry-after maxTimeout exceeded", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -166,7 +166,7 @@ test("Test retry", {only: true}, async t => {
 		const now = Date.now();
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -194,7 +194,7 @@ test("Test retry", {only: true}, async t => {
 	await t.test("Test maxRetry exceeded", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -209,7 +209,7 @@ test("Test retry", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",

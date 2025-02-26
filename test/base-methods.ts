@@ -1,7 +1,7 @@
 import {test} from "tap";
-import {TestClient} from "./test-types";
+import {TestClient} from "./test-types.js";
 import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src";
+import RestClient from "../src/index.js";
 
 test("Test HTTP Methods", {only: true}, async t => {
 
@@ -23,7 +23,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 
 	await t.test("GET method", async (t: TestClient) => {
 		t.context.mockPool.intercept({
-			path: `/`,
+			path: "/",
 			method: "GET"
 		})
 			.defaultReplyHeaders({
@@ -41,7 +41,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 	await t.test("GET method text/plain", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -59,7 +59,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 	await t.test("POST method", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "POST",
 				body: JSON.stringify({ test: true })
 			})
@@ -78,7 +78,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 	await t.test("PUT method", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "PUT",
 				body: JSON.stringify({ test: true })
 			})
@@ -97,7 +97,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 	await t.test("PATCH method", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "PATCH",
 				body: JSON.stringify({ test: true })
 			})
@@ -116,7 +116,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 	await t.test("DELETE method", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "DELETE"
 			})
 			.defaultReplyHeaders({

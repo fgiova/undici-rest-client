@@ -1,7 +1,7 @@
 import {test} from "tap";
-import {TestClient} from "./test-types";
+import {TestClient} from "./test-types.js";
 import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src";
+import RestClient from "../src/index.js";
 import fastify from "fastify";
 import createHttpError from "http-errors";
 
@@ -26,7 +26,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Return simple error", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -40,7 +40,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
@@ -53,7 +53,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Error with message plain/text", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -67,7 +67,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
@@ -80,7 +80,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Error with JSON body with error field", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -94,7 +94,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
@@ -107,7 +107,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Error with JSON body with message field", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -121,7 +121,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
@@ -134,7 +134,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Error with JSON complex body", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -148,7 +148,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
@@ -164,7 +164,7 @@ test("Fail Tests", {only: true}, async t => {
 	await t.test("Error with obj http-error", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
-				path: `/`,
+				path: "/",
 				method: "GET"
 			})
 			.defaultReplyHeaders({
@@ -178,7 +178,7 @@ test("Fail Tests", {only: true}, async t => {
 				requestKey: "test",
 				ttl: 5_000,
 			});
-		})
+		});
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",

@@ -2,11 +2,9 @@
   "name": "@fgiova/undici-rest-client",
   "version": "2.0.0",
   "main": "dist/index.js",
-  "files": [
-    "dist"
-  ],
+  "type": "module",
   "scripts": {
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint",
     "clean": "rimraf dist",
     "build": "tsc",
     "test": "tap",
@@ -38,28 +36,30 @@
     "node": ">=16.0.0"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.7",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.21.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@tsconfig/node20": "^20.1.4",
     "@types/http-errors": "^2.0.4",
-    "@types/lru-cache": "^7.10.10",
     "@types/mime-db": "^1.43.5",
-    "@types/node": "^16.18.71",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "conventional-changelog-conventionalcommits": "^7.0.2",
-    "eslint": "^8.56.0",
-    "eslint-plugin-import": "^2.29.1",
+    "@types/node": "^20.17.19",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "eslint": "^9.21.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
-    "fastify": "^4.26.0",
-    "semantic-release": "^23.0.0",
-    "tap": "^18.7.0",
+    "fastify": "^5.2.1",
+    "semantic-release": "^24.2.3",
+    "tap": "^21.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
   },
   "dependencies": {
     "http-errors": "^2.0.0",
-    "lru-cache": "^10.2.0",
-    "mime-db": "^1.52.0",
-    "undici": "^6.6.0"
+    "lru-cache": "^11.0.2",
+    "mime-db": "^1.53.0",
+    "undici": "^7.4.0"
   }
 }
