@@ -187,11 +187,12 @@ export default class RestClient {
 		const responseData = async <TResponseBody>(response: Dispatcher.ResponseData, isError = false): Promise<any> => {
 
 			let data: any;
-			if(!isError && !(mimeDb[response.headers["content-type"] as string]?.compressible)) {
+			const contentType = (response.headers["content-type"] as string)?.split(";")[0];
+			if(!isError && !(mimeDb[contentType]?.compressible)) {
 				return response.body.arrayBuffer();
 			}
 			const rawBody = await response.body.text();
-			if(response.headers["content-type"]?.includes("application/json")) {
+			if(contentType?.includes("application/json")) {
 				try {
 					data = JSON.parse(rawBody) as TResponseBody;
 				}

@@ -27,7 +27,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 			method: "GET"
 		})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json; charset=utf-8"
 			})
 			.reply(200,{test: true});
 
