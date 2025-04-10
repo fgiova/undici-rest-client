@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/fgiova/undici-rest-client/compare/2.0.0...2.0.1) (2025-04-10)
+
+
+### Bug Fixes
+
+* Fix encoding on ContentType ([b936b2c](https://github.com/fgiova/undici-rest-client/commit/b936b2c6aa1623d367d2f31e3143a0617ed93e49))
+
 # [2.0.0](https://github.com/fgiova/undici-rest-client/compare/1.0.1...2.0.0) (2024-02-05)
 
 
