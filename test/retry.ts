@@ -12,6 +12,11 @@ test("Test retry", {only: true}, async t => {
 		const mockPool = mockAgent.get("https://client.api.com");
 		const restClient = new RestClient({
 			baseUrl: "https://client.api.com",
+			retry: {
+				baseTimeout: 300,
+				maxTimeout: 1_000,
+				maxRetry: 5
+			}
 		});
 		t.context = {
 			mockPool,
@@ -59,13 +64,16 @@ test("Test retry", {only: true}, async t => {
 				method: "GET"
 			})
 			.defaultReplyHeaders({
-				"Retry-After": "1",
 				"content-type": "application/json"
 			})
 			.reply(() => {
 				if (retry === 0) {
 					retry++;
-					return { statusCode: 429, data: "" };
+					return {
+						statusCode: 429,
+						data: "",
+						responseOptions: {headers: {"retry-after": "1"}}
+					};
 				}
 				return { statusCode: 200, data: { test: true } };
 			})
@@ -79,7 +87,7 @@ test("Test retry", {only: true}, async t => {
 		t.ok(Date.now() - now >= 1_000);
 	});
 
-	await t.test("Test retry-after Date.now() + 1 second", async (t: TestClient) => {
+	await t.test("Test retry-after Date.now() + 1 second", {only: true}, async (t: TestClient) => {
 		let retry = 0;
 		const now = Date.now();
 		t.context.mockPool
@@ -88,13 +96,18 @@ test("Test retry", {only: true}, async t => {
 				method: "GET"
 			})
 			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() + 1_000).toISOString(),
 				"content-type": "application/json"
 			})
 			.reply(() => {
 				if (retry === 0) {
 					retry++;
-					return { statusCode: 503, data: "" };
+					return {
+						statusCode: 429,
+						data: "",
+						responseOptions: {
+							headers: {"retry-after" : new Date(Date.now() + 1_000).toUTCString()}
+						}
+					};
 				}
 				return { statusCode: 200, data: { test: true } };
 			})
@@ -118,7 +131,7 @@ test("Test retry", {only: true}, async t => {
 				method: "GET"
 			})
 			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() + 100_000).toISOString(),
+				"Retry-After": new Date(Date.now() + 100_000).toUTCString(),
 				"content-type": "application/json"
 			})
 			.reply(() => {
@@ -170,13 +183,12 @@ test("Test retry", {only: true}, async t => {
 				method: "GET"
 			})
 			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() - 1_000).toISOString(),
 				"content-type": "application/json"
 			})
 			.reply(() => {
 				if (retry === 0) {
 					retry++;
-					return { statusCode: 429, data: "" };
+					return { statusCode: 429, data: "", headers: {"retry-after" : new Date(Date.now() - 1_000).toISOString()} };
 				}
 				return { statusCode: 200, data: { test: true } };
 			})

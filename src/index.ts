@@ -7,7 +7,7 @@ import {
 	MockAgent,
 	interceptors,
 	MockClient,
-	MockPool
+	MockPool, setGlobalDispatcher
 } from "undici";
 import { LRUCache } from "lru-cache";
 import createHttpError from "http-errors";
@@ -95,6 +95,32 @@ export default class RestClient {
 			)
 		);
 
+		setGlobalDispatcher(getGlobalDispatcher().compose(
+			[
+				interceptors.retry({
+					statusCodes: this.RetryableCodes,
+					maxTimeout: this.MaxRetryTimeout,
+					minTimeout: this.BaseRetryTimeout,
+					maxRetries: this.MaxRetryTimes
+				}),
+				...(
+					this.UseNativeCache ?
+						[
+							interceptors.cache(),
+							(dispatch: Dispatcher["dispatch"] )=> {
+								return (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler) => {
+									if (options.bypassNativeCache && options.headers) {
+										(options.headers as IncomingHttpHeaders)["cache-control"] = "no-store";
+									}
+									return dispatch(options, handler);
+								};
+							}
+						] :
+						[]
+				)
+			]
+		));
+
 		if (options.retry?.backoff) {
 			this.retryBackoff = options.retry.backoff;
 		}
@@ -112,32 +138,7 @@ export default class RestClient {
 
 		this.undiciClient = new Pool(this.baseUrl, {
 			...options.undici?.clientOption || {}
-		})
-			.compose(
-				[
-					...(
-						this.UseNativeCache ?
-							[
-								/* interceptors.retry({
-									statusCodes: this.RetryableCodes,
-									maxTimeout: this.MaxRetryTimeout,
-									minTimeout: this.BaseRetryTimeout,
-									maxRetries: this.MaxRetryTimes
-								}),*/
-								interceptors.cache(),
-								(dispatch: Dispatcher["dispatch"] )=> {
-									return (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler) => {
-										if (options.bypassNativeCache && options.headers) {
-											(options.headers as IncomingHttpHeaders)["cache-control"] = "no-store";
-										}
-										return dispatch(options, handler);
-									};
-								}
-							] :
-							[]
-					)
-				]
-			);
+		});
 
 		return this;
 	}
@@ -320,7 +321,7 @@ export default class RestClient {
 		};
 
 		const result = new Promise<Dispatcher.ResponseData>(async (resolve, reject) => {
-			try {
+			/* try {
 				let retryResult = await resultRetryable(path, method, body);
 				let resultResponse: Dispatcher.ResponseData | undefined = undefined;
 				const now = Date.now();
@@ -352,6 +353,13 @@ export default class RestClient {
 				}
 			} catch (e: any) {
 				reject(createHttpError(500, e.message));
+			}*/
+			try {
+				const response = await resultRetryable(path, method, body);
+				resolve(response);
+			}
+			catch (e: any) {
+				reject(createHttpError(500, e.message));
 			}
 		})
 			.then(async (result) => {
@@ -378,11 +386,13 @@ export default class RestClient {
 			.finally(() => {
 				this.localCache.delete(promiseKey);
 			});
+
 		if (this.isIdempotentMethod(method)) {
 			this.localCache.set(promiseKey, result, {
 				size: this.localCache.maxSize ? 1 : undefined,
 			});
 		}
+
 		return result;
 	};
 }
