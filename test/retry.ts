@@ -1,21 +1,25 @@
-import {test} from "tap";
-import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src/index.js";
 import fastify from "fastify";
-import {TestClient} from "./test-types.js";
+import { test } from "tap";
+import { MockAgent, setGlobalDispatcher } from "undici";
+import RestClient from "../src/";
+import type { TestClient } from "./test-types";
 
-test("Test retry", {only: true}, async t => {
-
+test("Test retry", { only: true }, async (t) => {
 	t.beforeEach((t: TestClient) => {
 		const mockAgent = new MockAgent();
 		setGlobalDispatcher(mockAgent);
 		const mockPool = mockAgent.get("https://client.api.com");
 		const restClient = new RestClient({
 			baseUrl: "https://client.api.com",
+			retry: {
+				baseTimeout: 300,
+				maxTimeout: 1_000,
+				maxRetry: 5,
+			},
 		});
 		t.context = {
 			mockPool,
-			restClient
+			restClient,
 		};
 	});
 	t.afterEach(async (t: TestClient) => {
@@ -28,10 +32,10 @@ test("Test retry", {only: true}, async t => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(() => {
 				if (retry === 0) {
@@ -42,7 +46,7 @@ test("Test retry", {only: true}, async t => {
 			})
 			.persist();
 
-		const returndata = await t.context.restClient.get("/",{
+		const returndata = await t.context.restClient.get("/", {
 			requestKey: "test",
 			ttl: 5_000,
 		});
@@ -56,22 +60,25 @@ test("Test retry", {only: true}, async t => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"Retry-After": "1",
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(() => {
 				if (retry === 0) {
 					retry++;
-					return { statusCode: 429, data: "" };
+					return {
+						statusCode: 429,
+						data: "",
+						responseOptions: { headers: { "retry-after": "1" } },
+					};
 				}
 				return { statusCode: 200, data: { test: true } };
 			})
 			.persist();
 
-		const returndata = await t.context.restClient.get("/",{
+		const returndata = await t.context.restClient.get("/", {
 			requestKey: "test",
 			ttl: 5_000,
 		});
@@ -79,47 +86,57 @@ test("Test retry", {only: true}, async t => {
 		t.ok(Date.now() - now >= 1_000);
 	});
 
-	await t.test("Test retry-after Date.now() + 1 second", async (t: TestClient) => {
-		let retry = 0;
-		const now = Date.now();
-		t.context.mockPool
-			.intercept({
-				path: "/",
-				method: "GET"
-			})
-			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() + 1_000).toISOString(),
-				"content-type": "application/json"
-			})
-			.reply(() => {
-				if (retry === 0) {
-					retry++;
-					return { statusCode: 503, data: "" };
-				}
-				return { statusCode: 200, data: { test: true } };
-			})
-			.persist();
+	await t.test(
+		"Test retry-after Date.now() + 1 second",
+		{ only: true },
+		async (t: TestClient) => {
+			let retry = 0;
+			const now = Date.now();
+			t.context.mockPool
+				.intercept({
+					path: "/",
+					method: "GET",
+				})
+				.defaultReplyHeaders({
+					"content-type": "application/json",
+				})
+				.reply(() => {
+					if (retry === 0) {
+						retry++;
+						return {
+							statusCode: 429,
+							data: "",
+							responseOptions: {
+								headers: {
+									"retry-after": new Date(Date.now() + 1_000).toUTCString(),
+								},
+							},
+						};
+					}
+					return { statusCode: 200, data: { test: true } };
+				})
+				.persist();
 
-		const returndata = await t.context.restClient.get("/",{
-			requestKey: "test",
-			ttl: 3_000,
-		});
+			const returndata = await t.context.restClient.get("/", {
+				requestKey: "test",
+				ttl: 3_000,
+			});
 
-		t.same(returndata, { test: true });
-		t.ok(Date.now() - now >= 1_000);
-	});
-
+			t.same(returndata, { test: true });
+			t.ok(Date.now() - now >= 1_000);
+		},
+	);
 
 	await t.test("Test retry-after date too late", async (t: TestClient) => {
 		let retry = 0;
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() + 100_000).toISOString(),
-				"content-type": "application/json"
+				"Retry-After": new Date(Date.now() + 100_000).toUTCString(),
+				"content-type": "application/json",
 			})
 			.reply(() => {
 				if (retry === 0) {
@@ -130,36 +147,45 @@ test("Test retry", {only: true}, async t => {
 			})
 			.persist();
 
-		await t.rejects(t.context.restClient.get("/",{
-			requestKey: "test",
-			ttl: 5_000,
-		}), "ServiceUnavailableError");
+		await t.rejects(
+			t.context.restClient.get("/", {
+				requestKey: "test",
+				ttl: 5_000,
+			}),
+			"ServiceUnavailableError",
+		);
 	});
 
-	await t.test("Test retry-after maxTimeout exceeded", async (t: TestClient) => {
-		t.context.mockPool
-			.intercept({
-				path: "/",
-				method: "GET"
-			})
-			.defaultReplyHeaders({
-				"content-type": "application/json"
-			})
-			.reply(503, "")
-			.persist();
-		const apiClient = new RestClient({
-			baseUrl: "https://client.api.com",
-			retry: {
-				baseTimeout: 1_000,
-				maxTimeout: 1_000,
-				maxRetry: 30
-			}
-		});
-		await t.rejects(apiClient.get("/",{
-			requestKey: "test",
-			ttl: 5_000,
-		}), "ServiceUnavailableError");
-	});
+	await t.test(
+		"Test retry-after maxTimeout exceeded",
+		async (t: TestClient) => {
+			t.context.mockPool
+				.intercept({
+					path: "/",
+					method: "GET",
+				})
+				.defaultReplyHeaders({
+					"content-type": "application/json",
+				})
+				.reply(503, "")
+				.persist();
+			const apiClient = new RestClient({
+				baseUrl: "https://client.api.com",
+				retry: {
+					baseTimeout: 1_000,
+					maxTimeout: 1_000,
+					maxRetry: 30,
+				},
+			});
+			await t.rejects(
+				apiClient.get("/", {
+					requestKey: "test",
+					ttl: 5_000,
+				}),
+				"ServiceUnavailableError",
+			);
+		},
+	);
 
 	await t.test("Test retry-after past date", async (t: TestClient) => {
 		let retry = 0;
@@ -167,22 +193,27 @@ test("Test retry", {only: true}, async t => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"Retry-After": new Date(Date.now() - 1_000).toISOString(),
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(() => {
 				if (retry === 0) {
 					retry++;
-					return { statusCode: 429, data: "" };
+					return {
+						statusCode: 429,
+						data: "",
+						headers: {
+							"retry-after": new Date(Date.now() - 1_000).toISOString(),
+						},
+					};
 				}
 				return { statusCode: 200, data: { test: true } };
 			})
 			.persist();
 
-		const returndata = await t.context.restClient.get("/",{
+		const returndata = await t.context.restClient.get("/", {
 			requestKey: "test",
 			ttl: 5_000,
 		});
@@ -190,22 +221,21 @@ test("Test retry", {only: true}, async t => {
 		t.ok(Date.now() - now >= 300);
 	});
 
-
 	await t.test("Test maxRetry exceeded", async (t: TestClient) => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(503, "Service Unavailable")
 			.persist();
 
 		const app = fastify();
 		app.get("/", async (req, res) => {
-			await t.context.restClient.get("/",{
+			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,
 			});
@@ -213,10 +243,9 @@ test("Test retry", {only: true}, async t => {
 		await app.ready();
 		const res = await app.inject({
 			method: "GET",
-			url: "/"
+			url: "/",
 		});
 		const data = await res.json();
-		t.has(data, {message: "Service Unavailable"});
+		t.has(data, { message: "Service Unavailable" });
 	});
-
 });

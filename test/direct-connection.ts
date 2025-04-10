@@ -1,33 +1,37 @@
-import {test} from "tap";
-import {LRUCache} from "lru-cache";
-import RestClient from "../src/index.js";
+import { LRUCache } from "lru-cache";
+import { test } from "tap";
+import RestClient from "../src/";
 
 test("RestClient with connection to internet", async (t) => {
-	await t.test("GET google.com", async t => {
-		const cache = new LRUCache<string,any>({
+	await t.test("GET google.com", async (t) => {
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		const cache = new LRUCache<string, any>({
 			max: 100,
-			ttl: 5_000
+			ttl: 5_000,
 		});
 		const apiClient = new RestClient({
 			baseUrl: "https://www.google.com",
-			cache
+			cache,
 		});
 
-		await t.resolves(apiClient.get("/",{
-			requestKey: "test",
-			ttl: 5_000,
-		}));
+		await t.resolves(
+			apiClient.get("/", {
+				requestKey: "test",
+				ttl: 5_000,
+			}),
+		);
 	});
 
-
-	await t.test("GET google.pippo", async t => {
+	await t.test("GET google.pippo", async (t) => {
 		const apiClient = new RestClient({
-			baseUrl: "https://www.google.pippo"
+			baseUrl: "https://www.google.pippo",
 		});
 
-		await t.rejects(apiClient.get("/",{
-			requestKey: "test",
-			ttl: 5_000,
-		}));
+		await t.rejects(
+			apiClient.get("/", {
+				requestKey: "test",
+				ttl: 5_000,
+			}),
+		);
 	});
 });

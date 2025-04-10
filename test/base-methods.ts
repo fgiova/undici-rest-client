@@ -1,10 +1,9 @@
-import {test} from "tap";
-import {TestClient} from "./test-types.js";
-import {MockAgent, setGlobalDispatcher} from "undici";
-import RestClient from "../src/index.js";
+import { test } from "tap";
+import { MockAgent, setGlobalDispatcher } from "undici";
+import RestClient from "../src/";
+import type { TestClient } from "./test-types.js";
 
-test("Test HTTP Methods", {only: true}, async t => {
-
+test("Test HTTP Methods", { only: true }, async (t) => {
 	t.beforeEach((t: TestClient) => {
 		const mockAgent = new MockAgent();
 		setGlobalDispatcher(mockAgent);
@@ -14,7 +13,7 @@ test("Test HTTP Methods", {only: true}, async t => {
 		});
 		t.context = {
 			mockPool,
-			restClient
+			restClient,
 		};
 	});
 	t.afterEach(async (t: TestClient) => {
@@ -22,16 +21,17 @@ test("Test HTTP Methods", {only: true}, async t => {
 	});
 
 	await t.test("GET method", async (t: TestClient) => {
-		t.context.mockPool.intercept({
-			path: "/",
-			method: "GET"
-		})
-			.defaultReplyHeaders({
-				"content-type": "application/json"
+		t.context.mockPool
+			.intercept({
+				path: "/",
+				method: "GET",
 			})
-			.reply(200,{test: true});
+			.defaultReplyHeaders({
+				"content-type": "application/json",
+			})
+			.reply(200, { test: true });
 
-		const returndata = await t.context.restClient.get("/",{
+		const returndata = await t.context.restClient.get("/", {
 			requestKey: "test",
 			ttl: 5_000,
 		});
@@ -42,14 +42,14 @@ test("Test HTTP Methods", {only: true}, async t => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "GET"
+				method: "GET",
 			})
 			.defaultReplyHeaders({
-				"content-type": "text/plain"
+				"content-type": "text/plain",
 			})
 			.reply(200, "{test: true}");
 
-		const returndata = await t.context.restClient.get("/",{
+		const returndata = await t.context.restClient.get("/", {
 			requestKey: "test",
 			ttl: 5_000,
 		});
@@ -61,16 +61,16 @@ test("Test HTTP Methods", {only: true}, async t => {
 			.intercept({
 				path: "/",
 				method: "POST",
-				body: JSON.stringify({ test: true })
+				body: JSON.stringify({ test: true }),
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(200, { test: true });
-		const returndata = await t.context.restClient.post("/",{
+		const returndata = await t.context.restClient.post("/", {
 			requestKey: "test",
 			ttl: 5_000,
-			body: { test: true }
+			body: { test: true },
 		});
 		t.same(returndata, { test: true });
 	});
@@ -80,16 +80,16 @@ test("Test HTTP Methods", {only: true}, async t => {
 			.intercept({
 				path: "/",
 				method: "PUT",
-				body: JSON.stringify({ test: true })
+				body: JSON.stringify({ test: true }),
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(200, { test: true });
-		const returndata = await t.context.restClient.put("/",{
+		const returndata = await t.context.restClient.put("/", {
 			requestKey: "test",
 			ttl: 5_000,
-			body: { test: true }
+			body: { test: true },
 		});
 		t.same(returndata, { test: true });
 	});
@@ -99,16 +99,16 @@ test("Test HTTP Methods", {only: true}, async t => {
 			.intercept({
 				path: "/",
 				method: "PATCH",
-				body: JSON.stringify({ test: true })
+				body: JSON.stringify({ test: true }),
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(200, { test: true });
-		const returndata = await t.context.restClient.patch("/",{
+		const returndata = await t.context.restClient.patch("/", {
 			requestKey: "test",
 			ttl: 5_000,
-			body: { test: true }
+			body: { test: true },
 		});
 		t.same(returndata, { test: true });
 	});
@@ -117,15 +117,17 @@ test("Test HTTP Methods", {only: true}, async t => {
 		t.context.mockPool
 			.intercept({
 				path: "/",
-				method: "DELETE"
+				method: "DELETE",
 			})
 			.defaultReplyHeaders({
-				"content-type": "application/json"
+				"content-type": "application/json",
 			})
 			.reply(200, "");
 
-		await t.resolves(t.context.restClient.delete("/",{
-			requestKey: "test",
-		}));
+		await t.resolves(
+			t.context.restClient.delete("/", {
+				requestKey: "test",
+			}),
+		);
 	});
 });

@@ -58,12 +58,13 @@ const response = await client.post("/foo/bar", {
 ```
 
 ## Client Options
-| Option  | Type                  | Default | Description                                   |
-|---------|-----------------------|---------|-----------------------------------------------|
-| baseUrl | string                |         | The base domain url to be used for the client |
-| retry   | Retry Options         |         | The retry options                             |
-| cache   | LRUCache<string, any> |         | The LRU cache instance                        |
-| undici  | Undici Option         |         | The undici options                            |
+| Option      | Type                  | Default | Description                                   |
+|-------------|-----------------------|---------|-----------------------------------------------|
+| baseUrl     | string                |         | The base domain url to be used for the client |
+| retry       | Retry Options         |         | The retry options                             |
+| cache       | LRUCache<string, any> |         | The LRU cache instance                        |
+| cacheNative | boolean               | true    | Use native Undici's cache                     |
+| undici      | Undici Option         |         | The undici options                            |
 
 ## Retry Options
 | Option          | Type                                | Default                      | Description                                   |
@@ -89,12 +90,10 @@ const response = await client.post("/foo/bar", {
 | requestKey      | string                              |         | The key for the cache                         |
 | path            | string                              |         | The path for the request                      |
 
-
 **Notes**:<br>
 The cache is a simple LRU cache with a max size of 1000 items and a default TTL of 30 seconds.<br>
-The cache TTL can be overridden using the `ttl` option in the request.<br>
-The cache key is generated using the request method, the request path and the request body.<br>
-The cache key can be overridden using the `requestKey` option in the request.<br>
+The cache can be enabled using the `requestKey` option in the request (cache TTL must be positive). If cache is enabled will disable Undici's cache.<br>
+The cache TTL can be modified using the `ttl` option in the request.<br>
 When the request is not idempotent, the cache is disabled.<br>
 When the body is a plain object the header content-type "application/json" is added to request.<br>
 When response is a not compressible (typically a binary response) array buffer are returned.<br>
