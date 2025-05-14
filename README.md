@@ -5,6 +5,8 @@
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/maintainability)](https://codeclimate.com/github/fgiova/undici-rest-client/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/test_coverage)](https://codeclimate.com/github/fgiova/undici-rest-client/test_coverage)
+[![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+
 
 ## Description
 This is a simple REST client using [undici](https://www.npmjs.com/package/undici) as http client.<br>

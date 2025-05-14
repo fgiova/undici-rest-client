@@ -1,34 +1,37 @@
-import { setTimeout } from "timers/promises";
-import mimeDb from "mime-db";
-import { Dispatcher, Pool, getGlobalDispatcher, MockAgent } from "undici";
-import { LRUCache } from "lru-cache";
+import { setTimeout } from "node:timers/promises";
 import createHttpError from "http-errors";
+import { LRUCache } from "lru-cache";
+import mimeDb from "mime-db";
+import { type Dispatcher, MockAgent, Pool, getGlobalDispatcher } from "undici";
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+type BodyContent = any;
 
 interface RestClientOptions {
 	baseUrl: string;
-	cache?: LRUCache<string, any>;
+	cache?: LRUCache<string, BodyContent>;
 	undici?: {
 		clientOption?: Pool.Options;
 		client?: Dispatcher;
-	}
+	};
 	retry?: {
 		httpCodes?: number[];
 		backoff?: (retryCount: number) => number;
 		baseTimeout?: number;
 		maxTimeout?: number;
 		maxRetry?: number;
-	}
+	};
 }
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 type RequestOptions = {
-	path: string,
-	requestKey?: string,
-	ttl?: number,
-	method: Method,
-	body?: any,
-	headers?: Record<string, string>
+	path: string;
+	requestKey?: string;
+	ttl?: number;
+	method: Method;
+	body?: BodyContent;
+	headers?: Record<string, string>;
 };
 
 export default class RestClient {
@@ -42,15 +45,19 @@ export default class RestClient {
 	private readonly MaxRetryTimes;
 	private readonly MaxRetryTimeout;
 	private readonly retryBackoff = (retryCount: number) => {
-		return this.BaseRetryTimeout * Math.pow(2, retryCount);
+		return this.BaseRetryTimeout * 2 ** retryCount;
 	};
 
-	private readonly localCache: LRUCache<string, any>;
+	private readonly localCache: LRUCache<string, BodyContent>;
 
 	constructor(options: RestClientOptions) {
 		this.baseUrl = options.baseUrl.replace(/\/$/, "");
-		this.localCache = options.cache ?? new LRUCache<string, any>({max: 1000, ttl: 30_000});
-		this.RetryableCodes = options.retry?.httpCodes ?? [502, 503, 429, 408, 504, 599];
+		this.localCache =
+			options.cache ??
+			new LRUCache<string, BodyContent>({ max: 1000, ttl: 30_000 });
+		this.RetryableCodes = options.retry?.httpCodes ?? [
+			502, 503, 429, 408, 504, 599,
+		];
 		this.BaseRetryTimeout = options.retry?.baseTimeout ?? 300;
 		this.MaxRetryTimeout = options.retry?.maxTimeout ?? 30_000;
 		this.MaxRetryTimes = options.retry?.maxRetry ?? 3;
@@ -59,20 +66,16 @@ export default class RestClient {
 		}
 		if (options.undici?.clientOption) {
 			this.undiciClient = new Pool(this.baseUrl, options.undici.clientOption);
-		}
-		else if (options.undici?.client){
+		} else if (options.undici?.client) {
 			this.undiciClient = options.undici.client;
-		}
-		else {
+		} else {
 			const globalDispatcher = getGlobalDispatcher();
 			if (globalDispatcher instanceof MockAgent) {
 				this.undiciClient = globalDispatcher;
-			}
-			else {
+			} else {
 				this.undiciClient = new Pool(this.baseUrl);
 			}
 		}
-		return this;
 	}
 
 	private readonly isIdempotentMethod = (method: Method) => {
@@ -87,21 +90,27 @@ export default class RestClient {
 		return this.undiciClient.close();
 	};
 
-	private readonly isPlainObject = (val: any) =>
+	private readonly isPlainObject = (val: unknown) =>
 		!!val && typeof val === "object" && val.constructor === Object;
 
-	public readonly get = async <TResponseBody>(path: string, options: Omit<RequestOptions, "path" | "method" | "body" > = {} )=> {
+	public readonly get = async <TResponseBody>(
+		path: string,
+		options: Omit<RequestOptions, "path" | "method" | "body"> = {},
+	) => {
 		const { requestKey, ttl, headers } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			ttl,
 			method: "GET",
 			path,
-			headers
+			headers,
 		});
 	};
 
-	public readonly post = async <TResponseBody>(path: string, options: Omit<RequestOptions, "path" | "method"> = {} )=> {
+	public readonly post = async <TResponseBody>(
+		path: string,
+		options: Omit<RequestOptions, "path" | "method"> = {},
+	) => {
 		const { requestKey, ttl, body, headers } = options;
 		return this.request<TResponseBody>({
 			requestKey,
@@ -109,11 +118,14 @@ export default class RestClient {
 			method: "POST",
 			path,
 			body,
-			headers
+			headers,
 		});
 	};
 
-	public readonly put = async <TResponseBody>(path: string, options: Omit<RequestOptions, "path" | "method"> = {}  )=> {
+	public readonly put = async <TResponseBody>(
+		path: string,
+		options: Omit<RequestOptions, "path" | "method"> = {},
+	) => {
 		const { requestKey, ttl, body, headers } = options;
 		return this.request<TResponseBody>({
 			requestKey,
@@ -121,11 +133,14 @@ export default class RestClient {
 			method: "PUT",
 			path,
 			body,
-			headers
+			headers,
 		});
 	};
 
-	public readonly patch = async <TResponseBody>(path: string, options: Omit<RequestOptions, "path" | "method"> = {}  )=> {
+	public readonly patch = async <TResponseBody>(
+		path: string,
+		options: Omit<RequestOptions, "path" | "method"> = {},
+	) => {
 		const { requestKey, ttl, body, headers } = options;
 		return this.request<TResponseBody>({
 			requestKey,
@@ -133,28 +148,33 @@ export default class RestClient {
 			method: "PATCH",
 			path,
 			body,
-			headers
+			headers,
 		});
 	};
 
-	public readonly delete = async <TResponseBody>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl"> )=> {
+	public readonly delete = async <TResponseBody>(
+		path: string,
+		options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl">,
+	) => {
 		const { requestKey, headers } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			method: "DELETE",
 			path,
-			headers
+			headers,
 		});
 	};
 
-	public readonly request = async <TResponseBody>( options: RequestOptions ): Promise<TResponseBody> => {
+	public readonly request = async <TResponseBody>(
+		options: RequestOptions,
+	): Promise<TResponseBody> => {
 		const { requestKey, ttl, method, path } = options;
 		let { body, headers } = options;
 		if (body && this.isPlainObject(body)) {
 			body = JSON.stringify(body);
 			headers = {
 				...headers,
-				"content-type": "application/json"
+				"content-type": "application/json",
 			};
 		}
 		if (requestKey) {
@@ -172,133 +192,146 @@ export default class RestClient {
 			}
 		}
 
-		const resultRetryable = (url: string, method: Method, body?: any) => {
+		const resultRetryable = (
+			url: string,
+			method: Method,
+			body?: BodyContent,
+		) => {
 			return this.undiciClient.request({
 				origin: this.baseUrl,
 				path: url,
 				method,
 				headers: {
-					...headers
+					...headers,
 				},
-				body
+				body,
 			});
 		};
 
-		const responseData = async <TResponseBody>(response: Dispatcher.ResponseData, isError = false): Promise<any> => {
-
-			let data: any;
-			const contentType = (response.headers["content-type"] as string)?.split(";")[0];
-			if(!isError && !(mimeDb[contentType]?.compressible)) {
+		const responseData = async (
+			response: Dispatcher.ResponseData,
+			isError = false,
+		) => {
+			let data: BodyContent;
+			const contentType = (response.headers["content-type"] as string)?.split(
+				";",
+			)[0];
+			if (!isError && !mimeDb[contentType]?.compressible) {
 				return response.body.arrayBuffer();
 			}
 			const rawBody = await response.body.text();
-			if(contentType?.includes("application/json")) {
+			if (contentType?.includes("application/json")) {
 				try {
-					data = JSON.parse(rawBody) as TResponseBody;
-				}
-				catch(e) {
+					data = JSON.parse(rawBody);
+				} catch (e) {
 					data = rawBody;
 				}
-			}
-			else {
-				data = rawBody as TResponseBody;
+			} else {
+				data = rawBody;
 			}
 			if (isError) {
 				let message = `${data.message || data.error || rawBody}`;
-				message = message.length ? message : (createHttpError(response.statusCode) as any).message;
+				message = message.length
+					? message
+					: createHttpError(response.statusCode).message;
 				if (data.constructor === String) {
 					return {
-						message
+						message,
 					};
 				}
 				return {
 					...data,
-					message
+					message,
 				};
 			}
 			return data;
 		};
 
-
-		const retryTimeout = async (retryResponse: Dispatcher.ResponseData, retryCount: number) => {
+		const retryTimeout = async (
+			retryResponse: Dispatcher.ResponseData,
+			retryCount: number,
+		) => {
 			const retryAfterHeader = retryResponse.headers["retry-after"] as string;
-			const retryableWithDelay = [429, 503].includes(retryResponse.statusCode ) && retryAfterHeader;
+			const retryableWithDelay =
+				[429, 503].includes(retryResponse.statusCode) && retryAfterHeader;
 			if (retryableWithDelay) {
-				const retryAfter = isNaN(Number(retryAfterHeader))
+				const retryAfter = Number.isNaN(Number(retryAfterHeader))
 					? 0
 					: Number(retryAfterHeader);
 				if (retryAfter > 0) {
 					await setTimeout(retryAfter * 1_000);
-				}
-				else {
+				} else {
 					if (new Date(retryAfterHeader).valueOf() > Date.now()) {
-						const retryAfterDate = new Date(retryAfterHeader).valueOf() - new Date().valueOf();
+						const retryAfterDate =
+							new Date(retryAfterHeader).valueOf() - new Date().valueOf();
 						if (retryAfterDate > this.MaxRetryTimeout) {
-							const error = await responseData<any>(retryResponse, true);
-							throw createHttpError(retryResponse.statusCode, error.message, error);
+							const error = await responseData(retryResponse, true);
+							throw createHttpError(
+								retryResponse.statusCode,
+								error.message,
+								error,
+							);
 						}
 						await setTimeout(retryAfterDate);
 						return;
 					}
 					await setTimeout(this.retryBackoff(retryCount));
 				}
-			}
-			else {
+			} else {
 				await setTimeout(this.retryBackoff(retryCount));
 			}
 		};
 
-		const result = new Promise<Dispatcher.ResponseData>(async (resolve, reject) => {
-			try {
-				let retryResult = await resultRetryable(path, method, body);
-				let resultResponse: Dispatcher.ResponseData;
-				const now = Date.now();
-				for (let i = 0; i < this.MaxRetryTimes && !resultResponse; i++) {
-					if (Date.now() - now > this.MaxRetryTimeout) {
-						resultResponse = retryResult;
-						break;
-					}
-					if (this.RetryableCodes.includes(retryResult.statusCode)) {
-						try {
-							await retryTimeout(retryResult, i);
+		const result = new Promise<Dispatcher.ResponseData>(
+			// biome-ignore lint/suspicious/noAsyncPromiseExecutor: <explanation>
+			async (resolve, reject) => {
+				try {
+					let retryResult = await resultRetryable(path, method, body);
+					let resultResponse: Dispatcher.ResponseData;
+					const now = Date.now();
+					for (let i = 0; i < this.MaxRetryTimes && !resultResponse; i++) {
+						if (Date.now() - now > this.MaxRetryTimeout) {
+							resultResponse = retryResult;
+							break;
 						}
-						catch (e) {
-							return reject(e);
+						if (this.RetryableCodes.includes(retryResult.statusCode)) {
+							try {
+								await retryTimeout(retryResult, i);
+							} catch (e) {
+								return reject(e);
+							}
+							retryResult = await resultRetryable(path, method, body);
+						} else {
+							resultResponse = retryResult;
+							break;
 						}
-						retryResult = await resultRetryable(path, method, body);
 					}
-					else {
-						resultResponse = retryResult;
-						break;
+					if (resultResponse) {
+						return resolve(resultResponse);
 					}
-				}
-				if (resultResponse) {
-					return resolve(resultResponse);
-				}
-				else {
-					const error = await responseData<any>(retryResult, true);
+					const error = await responseData(retryResult, true);
 					reject(createHttpError(retryResult.statusCode, error));
+				} catch (e) {
+					reject(createHttpError(500, e.message));
 				}
-			} catch (e) {
-				reject(createHttpError(500, e.message));
-			}
-		})
+			},
+		)
 			.then(async (result) => {
 				if (!this.isAnError(result.statusCode)) {
-					const data = await responseData<TResponseBody>(result);
+					const data = (await responseData(result)) as TResponseBody;
 					if (requestKey) {
 						if (method === "DELETE") {
 							this.localCache.delete(`${requestKey}#data`);
 						}
 						if (this.isIdempotentMethod(method) && ttl !== undefined) {
 							this.localCache.set(`${requestKey}#data`, data, {
-								ttl: ttl || 3_000
+								ttl: ttl || 3_000,
 							});
 						}
 					}
 					return data;
 				}
-				const error = await responseData<any>(result, true);
+				const error = await responseData(result, true);
 				throw createHttpError(result.statusCode, error.message, error);
 			})
 			.finally(() => {

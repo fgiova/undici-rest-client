@@ -1,65 +1,77 @@
 {
-  "name": "@fgiova/undici-rest-client",
-  "version": "2.0.1",
-  "main": "dist/index.js",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "lint": "eslint 'src/**/*.ts'",
-    "clean": "rimraf dist",
-    "build": "tsc",
-    "test": "tap",
-    "test:debug": "tap --only --timeout=0",
-    "test:coverage": "tap --coverage-report=lcovonly --coverage-report=text"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fgiova/undici-rest-client.git"
-  },
-  "tap": {
-    "show-full-coverage": true,
-    "exclude": [
-      "**/*.d.ts"
-    ]
-  },
-  "keywords": [
-    "undici",
-    "rest",
-    "client",
-    "http"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "author": "Francesco Giovannini <fgiova@fgiova.com>",
-  "license": "MIT",
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "@types/http-errors": "^2.0.4",
-    "@types/lru-cache": "^7.10.10",
-    "@types/mime-db": "^1.43.5",
-    "@types/node": "^16.18.71",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "conventional-changelog-conventionalcommits": "^7.0.2",
-    "eslint": "^8.56.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prefer-arrow": "^1.2.3",
-    "fastify": "^4.26.0",
-    "semantic-release": "^23.0.0",
-    "tap": "^18.7.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "http-errors": "^2.0.0",
-    "lru-cache": "^10.2.0",
-    "mime-db": "^1.52.0",
-    "undici": "^6.6.0"
-  }
+	"name": "@fgiova/undici-rest-client",
+	"version": "2.0.1",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/esm/index.d.mts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/cjs/index.d.ts",
+				"default": "./dist/cjs/index.js"
+			}
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"lint": "biome ci ./src ./test",
+		"fix": "biome check --write ./src ./test",
+		"clean": "rimraf dist",
+		"prebuild": "npm run clean",
+		"build": "esmBuilder",
+		"test": "tap",
+		"test:debug": "tap --only --timeout=0",
+		"test:coverage": "tap --coverage-report=lcovonly --coverage-report=text"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fgiova/undici-rest-client.git"
+	},
+	"tap": {
+		"show-full-coverage": true,
+		"exclude": [
+			"**/*.d.ts"
+		]
+	},
+	"keywords": [
+		"undici",
+		"rest",
+		"client",
+		"http"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"author": "Francesco Giovannini <fgiova@fgiova.com>",
+	"license": "MIT",
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/git": "^10.0.1",
+		"@types/http-errors": "^2.0.4",
+		"@types/lru-cache": "^7.10.10",
+		"@types/mime-db": "^1.43.5",
+		"@types/node": "^16.18.71",
+		"conventional-changelog-conventionalcommits": "^7.0.2",
+		"fastify": "^4.26.0",
+		"semantic-release": "^22.0.12",
+		"tap": "^18.7.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3"
+	},
+	"dependencies": {
+		"@fgiova/cjs-esm-ts-builder": "^1.2.0",
+		"http-errors": "^2.0.0",
+		"lru-cache": "^10.2.0",
+		"mime-db": "^1.52.0",
+		"undici": "^6.21.3"
+	}
 }
