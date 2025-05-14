@@ -1,10 +1,10 @@
-import {Test} from "tap";
-import {Interceptable} from "undici";
-import RestClient from "../src";
+import { Test } from "tap";
+import type { Interceptable } from "undici";
+import type RestClient from "../src";
 
 export declare class TestClient extends Test {
 	context: {
-		mockPool: Interceptable,
-		restClient: RestClient
-	}
+		mockPool: Interceptable;
+		restClient: RestClient;
+	};
 }
