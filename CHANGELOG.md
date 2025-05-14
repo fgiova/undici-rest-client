@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/fgiova/undici-rest-client/compare/2.0.1...2.1.0) (2025-05-14)
+
+
+### Features
+
+* Add double format commonJS/esm ([81657f3](https://github.com/fgiova/undici-rest-client/commit/81657f32e4656a9785c5a74a2a0f2d4d9d0a91a1))
+
 ## [2.0.1](https://github.com/fgiova/undici-rest-client/compare/2.0.0...2.0.1) (2025-04-10)
 
 
