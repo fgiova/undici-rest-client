@@ -172,6 +172,28 @@ test("Test Client options", { only: true }, async (t) => {
 			.reply(200, data);
 
 		const returndata = await t.context.restClient.get("/blob");
-		t.same(Buffer.from(returndata as ArrayBuffer), data);
+		t.same(Buffer.from(returndata as unknown as ArrayBuffer), data);
 	});
+
+	await t.test(
+		"Test Array Buffer Response w headers",
+		async (t: TestClient) => {
+			const data = Buffer.from(Buffer.alloc(1));
+			t.context.mockPool
+				.intercept({
+					path: "/blob",
+					method: "GET",
+				})
+				.defaultReplyHeaders({
+					"content-type": "application/octet-stream",
+				})
+				.reply(200, data);
+
+			const returndata = await t.context.restClient.get("/blob", {
+				returnHeaders: true,
+			});
+			t.same(Buffer.from(returndata.body as unknown as ArrayBuffer), data);
+			t.same(returndata.headers["content-type"], "application/octet-stream");
+		},
+	);
 });

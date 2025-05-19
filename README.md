@@ -14,7 +14,7 @@ It's support a simple retry mechanism using exponential backoff or using delay b
 It's implement a simple LRU cache mechanism on idempotent HTTP methods.
 
 [!NOTE]
-For node 16 use version 1.x, version 2.x support only Node.js >= 18.
+For node 16 use version 1.x, version > 2.x support only Node.js >= 18.
 
 ## Installation
 
@@ -25,7 +25,7 @@ npm install @fgiova/undici-rest-client
 ## Usage
 
 ```typescript
-import { RestClient } from "@fgiova/undici-rest-client";
+import RestClient from "@fgiova/undici-rest-client";
 
 const client = new RestClient({
     baseUrl: "https://foo.bar.org",
@@ -57,6 +57,22 @@ const response = await client.post("/foo/bar", {
         foo: "bar",
     }
 });
+
+const responseWHeaders = await client.post("/foo/bar", {
+	headers: {
+		"x-foo": "bar",
+	},
+	ttl: 1000,
+	requestKey: "foo-bar",
+	body: {
+		foo: "bar",
+	},
+	returnHeaders: true,
+});
+
+console.log(response.body); // { foo: "bar" }
+console.log(response.headers); // { "x-foo-return": "bar" }
+
 ```
 
 ## Client Options
@@ -83,13 +99,14 @@ const response = await client.post("/foo/bar", {
 | pipelining      | number           |         | The number of pipelining                      |
 
 ## RequestOptions
-| Option          | Type                                | Default | Description                                   |
-|-----------------|-------------------------------------|---------|-----------------------------------------------|
-| headers         | Record<string, string>              |         | The HTTP headers                              |
-| body            | any                                 |         | The HTTP body                                 |
-| ttl             | number                              |         | The TTL for the cache                         |
-| requestKey      | string                              |         | The key for the cache                         |
-| path            | string                              |         | The path for the request                      |
+| Option        | Type                   | Default | Description                                                              |
+|---------------|------------------------|---------|--------------------------------------------------------------------------|
+| headers       | Record<string, string> |         | The HTTP headers                                                         |
+| body          | any                    |         | The HTTP body                                                            |
+| ttl           | number                 |         | The TTL for the cache                                                    |
+| requestKey    | string                 |         | The key for the cache                                                    |
+| path          | string                 |         | The path for the request                                                 |
+| returnHeaders | boolean                | false   | If true return headers into headers property and body into body property |
 
 
 **Notes**:<br>

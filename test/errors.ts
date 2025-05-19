@@ -160,9 +160,10 @@ test("Fail Tests", { only: true }, async (t) => {
 			url: "/",
 		});
 		const data = await res.json();
+
 		t.has(data, {
 			message: "some error message",
-			code: "CODE-error",
+			code: `{"message":"some error message","code":"CODE-error"}`,
 		});
 	});
 
