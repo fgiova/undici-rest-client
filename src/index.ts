@@ -4,12 +4,20 @@ import { LRUCache } from "lru-cache";
 import mimeDb from "mime-db";
 import { type Dispatcher, MockAgent, Pool, getGlobalDispatcher } from "undici";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-type BodyContent = any;
+type ErrorBody = {
+	message: string;
+	code?: string;
+};
+
+type ResponseBody<T> = T | ArrayBuffer;
+type ResponseHeadersAndBody<T> = {
+	headers: Dispatcher.ResponseData["headers"];
+	body: ResponseBody<T>;
+};
 
 interface RestClientOptions {
 	baseUrl: string;
-	cache?: LRUCache<string, BodyContent>;
+	cache?: LRUCache<string, unknown>;
 	undici?: {
 		clientOption?: Pool.Options;
 		client?: Dispatcher;
@@ -30,9 +38,31 @@ type RequestOptions = {
 	requestKey?: string;
 	ttl?: number;
 	method: Method;
-	body?: BodyContent;
+	body?: Dispatcher.RequestOptions["body"] | JSONValue;
 	headers?: Record<string, string>;
+	returnHeaders?: boolean;
 };
+type RequestOptionsWithHeaders<TOmit = unknown> = Omit<
+	RequestOptions,
+	TOmit extends string | number | symbol ? TOmit : "returnHeaders"
+> & {
+	returnHeaders: true;
+};
+type RequestOptionsOnlyBody<TOmit = unknown> = Omit<
+	RequestOptions,
+	TOmit extends string | number | symbol ? TOmit : "returnHeaders"
+> & {
+	returnHeaders?: false;
+};
+
+type JSONPrimitive = string | number | boolean | null | undefined;
+
+type JSONValue =
+	| JSONPrimitive
+	| JSONValue[]
+	| {
+			[key: string]: JSONValue;
+	  };
 
 export default class RestClient {
 	private readonly baseUrl: string;
@@ -48,13 +78,13 @@ export default class RestClient {
 		return this.BaseRetryTimeout * 2 ** retryCount;
 	};
 
-	private readonly localCache: LRUCache<string, BodyContent>;
+	private readonly localCache: LRUCache<string, unknown>;
 
 	constructor(options: RestClientOptions) {
 		this.baseUrl = options.baseUrl.replace(/\/$/, "");
 		this.localCache =
 			options.cache ??
-			new LRUCache<string, BodyContent>({ max: 1000, ttl: 30_000 });
+			new LRUCache<string, unknown>({ max: 1000, ttl: 30_000 });
 		this.RetryableCodes = options.retry?.httpCodes ?? [
 			502, 503, 429, 408, 504, 599,
 		];
@@ -93,25 +123,51 @@ export default class RestClient {
 	private readonly isPlainObject = (val: unknown) =>
 		!!val && typeof val === "object" && val.constructor === Object;
 
-	public readonly get = async <TResponseBody>(
+	async get<TResponseBody>(
 		path: string,
-		options: Omit<RequestOptions, "path" | "method" | "body"> = {},
-	) => {
-		const { requestKey, ttl, headers } = options;
+		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	async get<TResponseBody>(
+		path: string,
+		options?: RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<ResponseBody<TResponseBody>>;
+	async get<TResponseBody>(
+		path: string,
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method" | "body">
+			| RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
+		const { requestKey, ttl, headers, returnHeaders } = options || {};
 		return this.request<TResponseBody>({
 			requestKey,
 			ttl,
 			method: "GET",
 			path,
 			headers,
+			// @ts-ignore
+			returnHeaders,
 		});
-	};
+	}
 
-	public readonly post = async <TResponseBody>(
+	async post<TResponseBody>(
 		path: string,
-		options: Omit<RequestOptions, "path" | "method"> = {},
-	) => {
-		const { requestKey, ttl, body, headers } = options;
+		options?: RequestOptionsWithHeaders<"path" | "method">,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	async post<TResponseBody>(
+		path: string,
+		options?: RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<ResponseBody<TResponseBody>>;
+	async post<TResponseBody>(
+		path: string,
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
+		const { requestKey, ttl, body, headers, returnHeaders } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			ttl,
@@ -119,14 +175,28 @@ export default class RestClient {
 			path,
 			body,
 			headers,
+			// @ts-ignore
+			returnHeaders,
 		});
-	};
+	}
 
-	public readonly put = async <TResponseBody>(
+	async put<TResponseBody>(
 		path: string,
-		options: Omit<RequestOptions, "path" | "method"> = {},
-	) => {
-		const { requestKey, ttl, body, headers } = options;
+		options?: RequestOptionsWithHeaders<"path" | "method">,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	async put<TResponseBody>(
+		path: string,
+		options?: RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<ResponseBody<TResponseBody>>;
+	async put<TResponseBody>(
+		path: string,
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
+		const { requestKey, ttl, body, headers, returnHeaders } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			ttl,
@@ -134,14 +204,28 @@ export default class RestClient {
 			path,
 			body,
 			headers,
+			// @ts-ignore
+			returnHeaders,
 		});
-	};
+	}
 
-	public readonly patch = async <TResponseBody>(
+	async patch<TResponseBody>(
 		path: string,
-		options: Omit<RequestOptions, "path" | "method"> = {},
-	) => {
-		const { requestKey, ttl, body, headers } = options;
+		options?: RequestOptionsWithHeaders<"path" | "method">,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	async patch<TResponseBody>(
+		path: string,
+		options?: RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<ResponseBody<TResponseBody>>;
+	async patch<TResponseBody>(
+		path: string,
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
+		const { requestKey, ttl, body, headers, returnHeaders } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			ttl,
@@ -149,45 +233,82 @@ export default class RestClient {
 			path,
 			body,
 			headers,
+			// @ts-ignore
+			returnHeaders,
 		});
-	};
+	}
 
-	public readonly delete = async <TResponseBody>(
+	async delete<TResponseBody>(
 		path: string,
-		options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl">,
-	) => {
-		const { requestKey, headers } = options;
+		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	async delete<TResponseBody>(
+		path: string,
+		options?: RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<ResponseBody<TResponseBody>>;
+	async delete<TResponseBody>(
+		path: string,
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method" | "body">
+			| RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
+		const { requestKey, headers, returnHeaders } = options;
 		return this.request<TResponseBody>({
 			requestKey,
 			method: "DELETE",
 			path,
 			headers,
+			// @ts-ignore
+			returnHeaders,
 		});
-	};
+	}
 
-	public readonly request = async <TResponseBody>(
-		options: RequestOptions,
-	): Promise<TResponseBody> => {
+	public async request<TResponseBody>(
+		options: RequestOptionsWithHeaders,
+	): Promise<ResponseHeadersAndBody<TResponseBody>>;
+	public async request<TResponseBody>(
+		options: RequestOptionsOnlyBody,
+	): Promise<ResponseBody<TResponseBody>>;
+	public async request<TResponseBody>(
+		options: RequestOptionsWithHeaders | RequestOptionsOnlyBody,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	> {
 		const { requestKey, ttl, method, path } = options;
 		let { body, headers } = options;
-		if (body && this.isPlainObject(body)) {
+		const returnHeaders = Boolean(options.returnHeaders);
+
+		if (
+			body &&
+			(this.isPlainObject(body) ||
+				Array.isArray(body) ||
+				!Number.isNaN(Number(body)) ||
+				body.constructor === String)
+		) {
 			body = JSON.stringify(body);
 			headers = {
 				...headers,
 				"content-type": "application/json",
 			};
 		}
+
 		if (requestKey) {
 			if (this.isIdempotentMethod(method)) {
 				const oldPromise = this.localCache.get(`${requestKey}#promise`);
 				if (oldPromise) {
-					return oldPromise;
+					return oldPromise as Promise<
+						ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+					>;
 				}
 			}
 			if (method === "GET" && ttl) {
 				const data = this.localCache.get(`${requestKey}#data`);
 				if (data) {
-					return data;
+					return data as
+						| ResponseHeadersAndBody<TResponseBody>
+						| ResponseBody<TResponseBody>;
 				}
 			}
 		}
@@ -195,7 +316,7 @@ export default class RestClient {
 		const resultRetryable = (
 			url: string,
 			method: Method,
-			body?: BodyContent,
+			body?: Dispatcher.RequestOptions["body"],
 		) => {
 			return this.undiciClient.request({
 				origin: this.baseUrl,
@@ -208,18 +329,39 @@ export default class RestClient {
 			});
 		};
 
-		const responseData = async (
+		async function responseData<
+			TError extends boolean = false,
+			TResponseData = TError extends true
+				? ErrorBody
+				: typeof returnHeaders extends true
+					? {
+							headers: Dispatcher.ResponseData["headers"];
+							body: TResponseBody | ArrayBuffer;
+						}
+					: TResponseBody | ArrayBuffer,
+		>(
 			response: Dispatcher.ResponseData,
-			isError = false,
-		) => {
-			let data: BodyContent;
+			isError?: TError,
+		): Promise<TResponseData> {
+			let data: unknown;
 			const contentType = (response.headers["content-type"] as string)?.split(
 				";",
 			)[0];
 			if (!isError && !mimeDb[contentType]?.compressible) {
-				return response.body.arrayBuffer();
+				const arrayBuffer = await response.body.arrayBuffer();
+				if (returnHeaders) {
+					return {
+						headers: response.headers,
+						body: arrayBuffer,
+						// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+					} as any;
+				}
+				// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+				return arrayBuffer as any;
 			}
+
 			const rawBody = await response.body.text();
+
 			if (contentType?.includes("application/json")) {
 				try {
 					data = JSON.parse(rawBody);
@@ -229,23 +371,34 @@ export default class RestClient {
 			} else {
 				data = rawBody;
 			}
+
 			if (isError) {
-				let message = `${data.message || data.error || rawBody}`;
+				let message = `${(data && typeof data === "object" && (("message" in data && data.message) || ("error" in data && data.error))) || rawBody}`;
 				message = message.length
 					? message
 					: createHttpError(response.statusCode).message;
 				if (data.constructor === String) {
 					return {
 						message,
-					};
+						// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+					} as any;
 				}
 				return {
-					...data,
+					code: JSON.stringify(data),
 					message,
-				};
+					// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+				} as any;
 			}
-			return data;
-		};
+			if (returnHeaders) {
+				return {
+					headers: response.headers,
+					body: data,
+					// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+				} as any;
+			}
+			// biome-ignore lint/suspicious/noExplicitAny: override type for conditional type
+			return data as any;
+		}
 
 		const retryTimeout = async (
 			retryResponse: Dispatcher.ResponseData,
@@ -286,7 +439,11 @@ export default class RestClient {
 			// biome-ignore lint/suspicious/noAsyncPromiseExecutor: <explanation>
 			async (resolve, reject) => {
 				try {
-					let retryResult = await resultRetryable(path, method, body);
+					let retryResult = await resultRetryable(
+						path,
+						method,
+						body as Dispatcher.RequestOptions["body"],
+					);
 					let resultResponse: Dispatcher.ResponseData;
 					const now = Date.now();
 					for (let i = 0; i < this.MaxRetryTimes && !resultResponse; i++) {
@@ -300,7 +457,11 @@ export default class RestClient {
 							} catch (e) {
 								return reject(e);
 							}
-							retryResult = await resultRetryable(path, method, body);
+							retryResult = await resultRetryable(
+								path,
+								method,
+								body as Dispatcher.RequestOptions["body"],
+							);
 						} else {
 							resultResponse = retryResult;
 							break;
@@ -310,15 +471,15 @@ export default class RestClient {
 						return resolve(resultResponse);
 					}
 					const error = await responseData(retryResult, true);
-					reject(createHttpError(retryResult.statusCode, error));
+					reject(createHttpError(retryResult.statusCode, error.message, error));
 				} catch (e) {
-					reject(createHttpError(500, e.message));
+					reject(createHttpError(500, e.message, e));
 				}
 			},
 		)
 			.then(async (result) => {
 				if (!this.isAnError(result.statusCode)) {
-					const data = (await responseData(result)) as TResponseBody;
+					const data = await responseData(result);
 					if (requestKey) {
 						if (method === "DELETE") {
 							this.localCache.delete(`${requestKey}#data`);
@@ -342,6 +503,7 @@ export default class RestClient {
 		if (this.isIdempotentMethod(method) && requestKey) {
 			this.localCache.set(`${requestKey}#promise`, result);
 		}
+
 		return result;
-	};
+	}
 }
