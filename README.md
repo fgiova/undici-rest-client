@@ -122,27 +122,27 @@ Parallel idempotent requests at same resource are deduplicated.<br>
 ## Methods
 ### request
 ```typescript
-request<T = any>(options: RequestOptions): Promise<Response<T>>;
+request<T = ArrayBuffer>(options: RequestOptions): Promise<Response<T>>;
 ```
 ### get
 ```typescript
-get<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" >): Promise<Response<T>>;
+get<T = ArrayBuffer>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" >): Promise<Response<T>>;
 ```
 ### post
 ```typescript
-post<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+post<T = ArrayBuffer>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
 ```
 ### put
 ```typescript
-put<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+put<T = ArrayBuffer>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
 ```
 ### patch
 ```typescript
-patch<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
+patch<T = ArrayBuffer>(path: string, options?: Omit<RequestOptions, "path" | "method">): Promise<Response<T>>;
 ```
 ### delete
 ```typescript
-delete<T = any>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl">): Promise<Response<T>>;
+delete<T = ArrayBuffer>(path: string, options?: Omit<RequestOptions, "path" | "method" | "body" | "ttl">): Promise<Response<T>>;
 ```
 
 ## License

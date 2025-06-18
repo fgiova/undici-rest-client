@@ -9,7 +9,7 @@ type ErrorBody = {
 	code?: string;
 };
 
-type ResponseBody<T> = T | ArrayBuffer;
+type ResponseBody<T> = T;
 type ResponseHeadersAndBody<T> = {
 	headers: Dispatcher.ResponseData["headers"];
 	body: ResponseBody<T>;
@@ -123,15 +123,18 @@ export default class RestClient {
 	private readonly isPlainObject = (val: unknown) =>
 		!!val && typeof val === "object" && val.constructor === Object;
 
-	async get<TResponseBody>(
+	async get<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	async get<TResponseBody>(
+	async get<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsOnlyBody<"path" | "method" | "body">,
 	): Promise<ResponseBody<TResponseBody>>;
-	async get<TResponseBody>(
+	async get<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async get<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
 			| RequestOptionsWithHeaders<"path" | "method" | "body">
@@ -151,15 +154,18 @@ export default class RestClient {
 		});
 	}
 
-	async post<TResponseBody>(
+	async post<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	async post<TResponseBody>(
+	async post<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsOnlyBody<"path" | "method">,
 	): Promise<ResponseBody<TResponseBody>>;
-	async post<TResponseBody>(
+	async post<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async post<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
 			| RequestOptionsWithHeaders<"path" | "method">
@@ -180,15 +186,18 @@ export default class RestClient {
 		});
 	}
 
-	async put<TResponseBody>(
+	async put<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	async put<TResponseBody>(
+	async put<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsOnlyBody<"path" | "method">,
 	): Promise<ResponseBody<TResponseBody>>;
-	async put<TResponseBody>(
+	async put<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async put<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
 			| RequestOptionsWithHeaders<"path" | "method">
@@ -209,15 +218,18 @@ export default class RestClient {
 		});
 	}
 
-	async patch<TResponseBody>(
+	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	async patch<TResponseBody>(
+	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsOnlyBody<"path" | "method">,
 	): Promise<ResponseBody<TResponseBody>>;
-	async patch<TResponseBody>(
+	async patch<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
 			| RequestOptionsWithHeaders<"path" | "method">
@@ -238,15 +250,18 @@ export default class RestClient {
 		});
 	}
 
-	async delete<TResponseBody>(
+	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	async delete<TResponseBody>(
+	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsOnlyBody<"path" | "method" | "body">,
 	): Promise<ResponseBody<TResponseBody>>;
-	async delete<TResponseBody>(
+	async delete<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
 			| RequestOptionsWithHeaders<"path" | "method" | "body">
@@ -265,13 +280,13 @@ export default class RestClient {
 		});
 	}
 
-	public async request<TResponseBody>(
+	public async request<TResponseBody = ArrayBuffer>(
 		options: RequestOptionsWithHeaders,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
-	public async request<TResponseBody>(
+	public async request<TResponseBody = ArrayBuffer>(
 		options: RequestOptionsOnlyBody,
 	): Promise<ResponseBody<TResponseBody>>;
-	public async request<TResponseBody>(
+	public async request<TResponseBody = ArrayBuffer>(
 		options: RequestOptionsWithHeaders | RequestOptionsOnlyBody,
 	): Promise<
 		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
@@ -504,6 +519,6 @@ export default class RestClient {
 			this.localCache.set(`${requestKey}#promise`, result);
 		}
 
-		return result;
+		return result as TResponseBody;
 	}
 }
