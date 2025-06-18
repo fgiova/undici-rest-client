@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/fgiova/undici-rest-client/compare/3.0.0...3.0.1) (2025-06-18)
+
+
+### Bug Fixes
+
+* fix default response body type ([85cd07f](https://github.com/fgiova/undici-rest-client/commit/85cd07f05a29ddac985f1420d432b143d1e9fb42))
+
 # [3.0.0](https://github.com/fgiova/undici-rest-client/compare/2.1.0...3.0.0) (2025-05-23)
 
 # [2.1.0](https://github.com/fgiova/undici-rest-client/compare/2.0.1...2.1.0) (2025-05-14)
