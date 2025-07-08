@@ -93,10 +93,11 @@ console.log(response.headers); // { "x-foo-return": "bar" }
 | backoff         | (retryCount: number) => number      | exponential backoff          | The backoff function                          |
 
 ## Undici Options
-| Option          | Type             | Default | Description                                   |
-|-----------------|------------------|---------|-----------------------------------------------|
-| clientOption    | Pool.Options     |         | The number of connections                     |
-| pipelining      | number           |         | The number of pipelining                      |
+| Option       | Type                           | Default | Description                      |
+|--------------|--------------------------------|---------|----------------------------------|
+| clientOption | Pool.Options                   |         | The number of connections        |
+| pipelining   | number                         |         | The number of pipelining         |
+| interceptors | DispatcherComposeInterceptor[] |         | Array of interceptors for undici |
 
 ## RequestOptions
 | Option        | Type                   | Default | Description                                                              |

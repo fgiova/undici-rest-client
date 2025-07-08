@@ -1,6 +1,6 @@
 import { LRUCache } from "lru-cache";
 import { test } from "tap";
-import {
+import Undici, {
 	Client,
 	type Dispatcher,
 	MockAgent,
@@ -8,6 +8,7 @@ import {
 } from "undici";
 import RestClient from "../src";
 import type { TestClient } from "./test-types";
+import interceptors = Undici.interceptors;
 
 test("Test Client options", { only: true }, async (t) => {
 	t.beforeEach((t: TestClient) => {
@@ -196,4 +197,38 @@ test("Test Client options", { only: true }, async (t) => {
 			t.same(returndata.headers["content-type"], "application/octet-stream");
 		},
 	);
+
+	await t.test("Test undici interceptors", async (t: TestClient) => {
+		let counter = 0;
+
+		const restClient = new RestClient({
+			baseUrl: "https://client.api.com",
+			undici: {
+				interceptors: [interceptors.redirect({ maxRedirections: 3 })],
+			},
+		});
+
+		t.context.mockPool
+			.intercept({
+				path: "/redirect",
+				method: "GET",
+			})
+			.reply(() => {
+				counter++;
+				return {
+					statusCode: 302,
+					data: "",
+					responseOptions: {
+						headers: {
+							location: "https://client.api.com/redirect",
+						},
+					},
+				};
+			})
+			.persist();
+
+		await t.rejects(restClient.get("/redirect"));
+
+		t.same(counter, 4);
+	});
 });
