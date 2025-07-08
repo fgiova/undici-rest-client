@@ -21,6 +21,7 @@ interface RestClientOptions {
 	undici?: {
 		clientOption?: Pool.Options;
 		client?: Dispatcher;
+		interceptors?: Dispatcher.DispatcherComposeInterceptor[];
 	};
 	retry?: {
 		httpCodes?: number[];
@@ -105,6 +106,11 @@ export default class RestClient {
 			} else {
 				this.undiciClient = new Pool(this.baseUrl);
 			}
+		}
+		if (options.undici?.interceptors?.length) {
+			this.undiciClient = this.undiciClient.compose(
+				options.undici.interceptors,
+			);
 		}
 	}
 
