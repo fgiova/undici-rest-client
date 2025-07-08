@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/fgiova/undici-rest-client/compare/3.0.1...3.1.0) (2025-07-08)
+
+
+### Features
+
+* Add option for undici's interceptors ([3603477](https://github.com/fgiova/undici-rest-client/commit/3603477e627141f3245d74be7c6f0b5d19009ee5))
+
 ## [3.0.1](https://github.com/fgiova/undici-rest-client/compare/3.0.0...3.0.1) (2025-06-18)
 
 
