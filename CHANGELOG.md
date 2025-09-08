@@ -1,3 +1,5 @@
+# [4.0.0](https://github.com/fgiova/undici-rest-client/compare/3.1.0...4.0.0) (2025-09-08)
+
 # [3.1.0](https://github.com/fgiova/undici-rest-client/compare/3.0.1...3.1.0) (2025-07-08)
 
 
