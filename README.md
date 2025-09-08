@@ -3,9 +3,9 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/undici-rest-client.svg?style=flat)](https://www.npmjs.com/package/@fgiova/undici-rest-client)
 ![CI workflow](https://github.com/fgiova/undici-rest-client/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![Maintainability](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/maintainability)](https://codeclimate.com/github/fgiova/undici-rest-client/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/8dafdbda7ca292ca7d00/test_coverage)](https://codeclimate.com/github/fgiova/undici-rest-client/test_coverage)
 [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+[![Maintainability](https://qlty.sh/gh/fgiova/projects/undici-rest-client/maintainability.svg)](https://qlty.sh/gh/fgiova/projects/undici-rest-client)
+[![Code Coverage](https://qlty.sh/gh/fgiova/projects/undici-rest-client/coverage.svg)](https://qlty.sh/gh/fgiova/projects/undici-rest-client)
 
 
 ## Description
@@ -14,7 +14,7 @@ It's support a simple retry mechanism using exponential backoff or using delay b
 It's implement a simple LRU cache mechanism on idempotent HTTP methods.
 
 [!NOTE]
-For node 16 use version 1.x, version > 2.x support only Node.js >= 18.
+For node 18 use version 2.x, version > 3.x support only Node.js >= 20 .
 
 ## Installation
 

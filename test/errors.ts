@@ -34,7 +34,7 @@ test("Fail Tests", { only: true }, async (t) => {
 			.reply(500, "");
 
 		const app = fastify();
-		app.get("/", async (req, res) => {
+		app.get("/", async (_req, _res) => {
 			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,
@@ -61,7 +61,7 @@ test("Fail Tests", { only: true }, async (t) => {
 			.reply(500, "some error text");
 
 		const app = fastify();
-		app.get("/", async (req, res) => {
+		app.get("/", async (_req, _res) => {
 			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,
@@ -90,7 +90,7 @@ test("Fail Tests", { only: true }, async (t) => {
 				.reply(500, { error: "some error" });
 
 			const app = fastify();
-			app.get("/", async (req, res) => {
+			app.get("/", async (_req, _res) => {
 				await t.context.restClient.get("/", {
 					requestKey: "test",
 					ttl: 5_000,
@@ -120,7 +120,7 @@ test("Fail Tests", { only: true }, async (t) => {
 				.reply(500, { message: "some error message" });
 
 			const app = fastify();
-			app.get("/", async (req, res) => {
+			app.get("/", async (_req, _res) => {
 				await t.context.restClient.get("/", {
 					requestKey: "test",
 					ttl: 5_000,
@@ -148,7 +148,7 @@ test("Fail Tests", { only: true }, async (t) => {
 			.reply(500, { message: "some error message", code: "CODE-error" });
 
 		const app = fastify();
-		app.get("/", async (req, res) => {
+		app.get("/", async (_req, _res) => {
 			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,
@@ -179,7 +179,7 @@ test("Fail Tests", { only: true }, async (t) => {
 			.replyWithError(createHttpError(500, "error createHttpError"));
 
 		const app = fastify();
-		app.get("/", async (req, res) => {
+		app.get("/", async (_req, _res) => {
 			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,

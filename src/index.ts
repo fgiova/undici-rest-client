@@ -2,7 +2,7 @@ import { setTimeout } from "node:timers/promises";
 import createHttpError from "http-errors";
 import { LRUCache } from "lru-cache";
 import mimeDb from "mime-db";
-import { type Dispatcher, MockAgent, Pool, getGlobalDispatcher } from "undici";
+import { type Dispatcher, getGlobalDispatcher, MockAgent, Pool } from "undici";
 
 type ErrorBody = {
 	message: string;
@@ -131,6 +131,9 @@ export default class RestClient {
 
 	async get<TResponseBody = ArrayBuffer>(
 		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
+	async get<TResponseBody = ArrayBuffer>(
+		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
 	): Promise<ResponseHeadersAndBody<TResponseBody>>;
 	async get<TResponseBody = ArrayBuffer>(
@@ -139,7 +142,12 @@ export default class RestClient {
 	): Promise<ResponseBody<TResponseBody>>;
 	async get<TResponseBody = ArrayBuffer>(
 		path: string,
-	): Promise<ResponseBody<TResponseBody>>;
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method" | "body">
+			| RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	>;
 	async get<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
@@ -155,11 +163,14 @@ export default class RestClient {
 			method: "GET",
 			path,
 			headers,
-			// @ts-ignore
+			// @ts-expect-error
 			returnHeaders,
 		});
 	}
 
+	async post<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
 	async post<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
@@ -170,7 +181,12 @@ export default class RestClient {
 	): Promise<ResponseBody<TResponseBody>>;
 	async post<TResponseBody = ArrayBuffer>(
 		path: string,
-	): Promise<ResponseBody<TResponseBody>>;
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	>;
 	async post<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
@@ -187,11 +203,14 @@ export default class RestClient {
 			path,
 			body,
 			headers,
-			// @ts-ignore
+			// @ts-expect-error
 			returnHeaders,
 		});
 	}
 
+	async put<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
 	async put<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
@@ -202,7 +221,12 @@ export default class RestClient {
 	): Promise<ResponseBody<TResponseBody>>;
 	async put<TResponseBody = ArrayBuffer>(
 		path: string,
-	): Promise<ResponseBody<TResponseBody>>;
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	>;
 	async put<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
@@ -219,11 +243,14 @@ export default class RestClient {
 			path,
 			body,
 			headers,
-			// @ts-ignore
+			// @ts-expect-error
 			returnHeaders,
 		});
 	}
 
+	async patch<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
 	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method">,
@@ -234,7 +261,12 @@ export default class RestClient {
 	): Promise<ResponseBody<TResponseBody>>;
 	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
-	): Promise<ResponseBody<TResponseBody>>;
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method">
+			| RequestOptionsOnlyBody<"path" | "method">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	>;
 	async patch<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
@@ -251,11 +283,14 @@ export default class RestClient {
 			path,
 			body,
 			headers,
-			// @ts-ignore
+			// @ts-expect-error
 			returnHeaders,
 		});
 	}
 
+	async delete<TResponseBody = ArrayBuffer>(
+		path: string,
+	): Promise<ResponseBody<TResponseBody>>;
 	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?: RequestOptionsWithHeaders<"path" | "method" | "body">,
@@ -266,7 +301,12 @@ export default class RestClient {
 	): Promise<ResponseBody<TResponseBody>>;
 	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
-	): Promise<ResponseBody<TResponseBody>>;
+		options?:
+			| RequestOptionsWithHeaders<"path" | "method" | "body">
+			| RequestOptionsOnlyBody<"path" | "method" | "body">,
+	): Promise<
+		ResponseHeadersAndBody<TResponseBody> | ResponseBody<TResponseBody>
+	>;
 	async delete<TResponseBody = ArrayBuffer>(
 		path: string,
 		options?:
@@ -281,7 +321,7 @@ export default class RestClient {
 			method: "DELETE",
 			path,
 			headers,
-			// @ts-ignore
+			// @ts-expect-error
 			returnHeaders,
 		});
 	}
@@ -386,7 +426,7 @@ export default class RestClient {
 			if (contentType?.includes("application/json")) {
 				try {
 					data = JSON.parse(rawBody);
-				} catch (e) {
+				} catch (_e) {
 					data = rawBody;
 				}
 			} else {
@@ -437,7 +477,7 @@ export default class RestClient {
 				} else {
 					if (new Date(retryAfterHeader).valueOf() > Date.now()) {
 						const retryAfterDate =
-							new Date(retryAfterHeader).valueOf() - new Date().valueOf();
+							new Date(retryAfterHeader).valueOf() - Date.now();
 						if (retryAfterDate > this.MaxRetryTimeout) {
 							const error = await responseData(retryResponse, true);
 							throw createHttpError(
@@ -457,7 +497,7 @@ export default class RestClient {
 		};
 
 		const result = new Promise<Dispatcher.ResponseData>(
-			// biome-ignore lint/suspicious/noAsyncPromiseExecutor: <explanation>
+			// biome-ignore lint/suspicious/noAsyncPromiseExecutor: this is inside a Promise
 			async (resolve, reject) => {
 				try {
 					let retryResult = await resultRetryable(

@@ -17,16 +17,16 @@ jobs:
       contents: read
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22, 24]
         os: [ubuntu-latest]
     steps:
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Setup Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -38,13 +38,10 @@ jobs:
 
       - name: publish code coverage to code-climate (duh)
         if: ${{ github.event_name == 'push' && matrix.node-version == 20 }} # Push coverage only once inside the matrix.
-        uses: paambaati/codeclimate-action@v5.0.0
-        env:
-          CC_TEST_REPORTER_ID: 595fc89a996f066bacca877ccc5f7338467d4bfdd3c07af9b8237b37e685dfdc
+        uses: qltysh/qlty-action/coverage@v2
         with:
-          debug: true
-          coverageLocations: |
-            ${{github.workspace}}/.tap/report/lcov.info:lcov
+         token: ${{secrets.QLTY_COVERAGE_TOKEN}}
+         files: ${{github.workspace}}/.tap/report/lcov.info
 
   build:
 
@@ -52,17 +49,17 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x, 24.x]
 
     steps:
 
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -75,12 +72,12 @@ jobs:
     if: github.event_name == 'push' # Release only on Push
     steps:
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: '20.x'
       - run: npm ci

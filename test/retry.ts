@@ -213,7 +213,7 @@ test("Test retry", { only: true }, async (t) => {
 			.persist();
 
 		const app = fastify();
-		app.get("/", async (req, res) => {
+		app.get("/", async (_req, _res) => {
 			await t.context.restClient.get("/", {
 				requestKey: "test",
 				ttl: 5_000,
