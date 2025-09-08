@@ -14,7 +14,7 @@ It's support a simple retry mechanism using exponential backoff or using delay b
 It's implement a simple LRU cache mechanism on idempotent HTTP methods.
 
 [!NOTE]
-For node 18 use version 2.x, version > 3.x support only Node.js >= 20 .
+For node 18 use version 2.x >, version > 4.x support only Node.js >= 20 .
 
 ## Installation
 
