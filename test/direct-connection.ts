@@ -4,8 +4,7 @@ import RestClient from "../src";
 
 test("RestClient with connection to internet", async (t) => {
 	await t.test("GET google.com", async (t) => {
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		const cache = new LRUCache<string, any>({
+		const cache = new LRUCache<string, unknown>({
 			max: 100,
 			ttl: 5_000,
 		});
